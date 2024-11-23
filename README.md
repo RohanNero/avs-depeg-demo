@@ -1,6 +1,6 @@
 # Stablecoin Depeg AVS Example
 
-This repo uses the AVS to rapidly review stablecoin depeg claims. Once a depeg event is confirmed, any cover for that stablecoin, with an active duration encompassing it, can be immediatly eligible for a payout.
+This repo, forked from [hello-world-avs](https://github.com/Layr-Labs/hello-world-avs), uses the AVS to rapidly review stablecoin depeg claims. Once a depeg event is confirmed, any cover for that stablecoin, with an active duration encompassing it, can be immediatly eligible for a payout.
 
 ### Example Flow
 
