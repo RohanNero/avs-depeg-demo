@@ -1,195 +1,119 @@
-# Depeg AVS
+# Stablecoin Depeg AVS Example
 
-Welcome to the Depeg AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components. For new users, please find [this video walkthrough](https://drive.google.com/file/d/1P6uA6kYWCbpeorTjADuoTlQ-q8uqwPZf/view?usp=sharing) of the depeg AVS repository.
+This repo uses the AVS to rapidly review stablecoin depeg claims. Once a depeg event is confirmed, any cover for that stablecoin, with an active duration encompassing it, can be immediatly eligible for a payout.
 
-## Architecture
+### Example Flow
 
-![depeg-png](./assets/depeg-diagramv2.png)
+1. User buys a stablecoin Depeg cover and receives sales policy NFT.
+2. The stablecoin they hold depegs for x amount of time and decreases in value below y threshold.
+3. The user, or anyone, can interact with the `DepegServiceManager` to create a task using relevant input data.
+4. An AVS monitoring the contract events can perform computation to validate or invalidate the task by responding to it.
 
-### AVS User Flow
+## Quick Start
 
-1. AVS consumer requests a "Depeg" message to be generated and signed.
-2. Depeg contract receives the request and emits a NewTaskCreated event for the request.
-3. All Operators who are registered to the AVS and has staked, delegated assets takes this request. Operator generates the requested message, hashes it, and signs the hash with their private key.
-4. Each Operator submits their signed hash back to the Depeg AVS contract.
-5. If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
+To setup and run the code, you'll need to open three different terminals.
 
-That's it. This simple flow highlights some of the core mechanics of how AVSs work.
+### First Terminal
 
-# Local Devnet Deployment
-
-The following instructions explain how to manually deploy the AVS from scratch including EigenLayer and AVS specific contracts using Foundry (forge) to a local anvil chain, and start Typescript Operator application and tasks.
-
-## Development Environment
-
-This section describes the tooling required for local development.
-
-### Non-Nix Environment
-
-Install dependencies:
-
-- [Node](https://nodejs.org/en/download/)
-- [Typescript](https://www.typescriptlang.org/download)
-- [ts-node](https://www.npmjs.com/package/ts-node)
-- [tcs](https://www.npmjs.com/package/tcs#installation)
-- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- [Foundry](https://getfoundry.sh/)
-- [ethers](https://www.npmjs.com/package/ethers)
-
-### Nix Environment
-
-On [Nix](https://nixos.org/) platforms, if you already have the proper Nix configuration, you can build the project’s artifacts inside a `nix develop` shell
+Clone the repo:
 
 ```sh
-nix develop
+git clone
 ```
 
-Otherwise, please refer to [installed and configured](./docs/nix-setup-guide.md) section.
-
-## Quick start
-
-### Start Anvil Chain
-
-In terminal window #1, execute the following commands:
+Install the dependencies:
 
 ```sh
-
-# Install npm packages
 npm install
-
-# Start local anvil chain
-npm run start:anvil
 ```
 
-### Deploy Contracts and Start Operator
-
-Open a separate terminal window #2, execute the following commands
+Start local anvil chain (Foundry):
 
 ```sh
-# Setup .env file
+anvil
+```
+
+### Second Terminal
+
+Create `.env` files and populate them with a private key (default works):
+
+```sh
 cp .env.example .env
 cp contracts/.env.example contracts/.env
-
-# Updates dependencies if necessary and builds the contracts
-npm run build
-
-# Deploy the EigenLayer contracts
-npm run deploy:core
-
-# Deploy the Depeg AVS contracts
-npm run deploy:depeg
-
-# (Optional) Update ABIs
-npm run extract:abis
-
-# Start the Operator application
-npm run start:operator
-
 ```
 
-### Create Depeg-AVS Tasks
-
-Open a separate terminal window #3, execute the following commands
+Compile the smart contracts:
 
 ```sh
-# Start the createNewTasks application
+npm run build
+```
+
+Deploy the EigenLayer core contracts:
+
+```sh
+npm run deploy:core
+```
+
+Deploy our Depeg AVS contracts:
+
+```sh
+npm run deploy:depeg
+```
+
+Update ABIs (Optional):
+
+```sh
+npm run extract:abis
+```
+
+Start the Operator application (Monitor for new tasks):
+
+```sh
+npm run start:operator
+```
+
+### Third Terminal
+
+Create new Depeg-AVS Tasks:
+
+```sh
 npm run start:traffic
 ```
 
-### Help and Support
+## Breakdown
 
-For help and support deploying and modifying this repo for your AVS, please:
+To outline the main pieces of this example briefly:
 
-1. Open a ticket via the intercom link at [support.eigenlayer.xyz](https://support.eigenlayer.xyz).
-2. Include the necessary troubleshooting information for your environment:
+- `/contracts/src/DepegServiceManager.sol` is our smart contract.
+- `/operator/createNewTask.ts` is a script for creating tasks on the `DepegServiceManager` contract.
+- `/operator/index.ts` is a script that actively monitors our contract for task creation events, and subsequently responds to them using the `DepegServiceManager` contract's `respondToTask()`.
 
-- Local anvil testing:
-  - Redeploy your local test using `--revert-strings debug` flag via the following commands and retest: `npm run deploy:core-debug && npm run deploy:depeg-debug`
-  - Include the full stacktrace from your error as a .txt file attachment.
-  - Create a minimal repo that demonstrates the behavior (fork or otherwise)
-  - Steps require to reproduce issue (compile and cause the error)
-- Holesky testing:
-  - Ensure contracts are verified on Holesky. Eg `forge verify-contract --chain-id 17000 --num-of-optimizations 200 src/YourContract.sol:YourContract YOUR_CONTRACT_ADDRESS`
-  - Send us your transaction hash where your contract is failing. We will use Tenderly to debug (adjust gas limit) and/or cast to re-run the transaction (eg `cast call --trace "trace_replayTransaction(0xTransactionHash)"`).
+### DepegServiceManager.sol
 
-### Contact Us
+This contract does two main things:
 
-If you're planning to build an AVS and would like to speak with a member of the EigenLayer DevRel team to discuss your ideas or architecture, please fill out this form and we'll be in touch shortly: [EigenLayer AVS Intro Call](https://share.hsforms.com/1BksFoaPjSk2l3pQ5J4EVCAein6l)
+1. Connects to the Eigenlayer core contracts and inherits the required functionality.
+2. Contains a pair of core functions that are in charge of:
+   - Creating new tasks with `createNewTask()`.
+   - Responding to created tasks with `RespondToTask()`.
 
-### Disclaimers
+In the case of stablecoin depeg, the data can potentially be confirmed on-chain using historical price data from an on-chain oracle provider. This isn't the case for other types of cover such as **Smart Contract** and **Validator Slashing** cover. These aren't as easily verifiable and thus would be reliant on operator consensus, and potentially the opinion of an AI/LLM. To remain consistent with future integrations, such as these two mentioned, it may be better to exclude any additional on-chain verification and solely rely on the AVS operators (Or a mock AI/LLM response?).
 
-- This repo is meant currently intended for _local anvil development testing_. Holesky deployment support will be added shortly.
-- Users who wish to build an AVS for Production purposes will want to migrate from the `ECDSAServiceManagerBase` implementation in `DepegServiceManager.sol` to a BLS style architecture using [RegistryCoordinator](https://github.com/Layr-Labs/eigenlayer-middleware/blob/dev/docs/RegistryCoordinator.md).
+#### Chainlink Integration
 
-# Appendix (Future Capabilities In Progress)
+One solution, only applicable to stablecoin depegs, to verify the AVS response would be to use historical data from chainlink's USDC/USD pair. Their `getAnswer()` function takes a `uint256 roundId` as input, allowing you to view prices that were reported in the past. In order to easily verify that the `roundId` corresponds to a certain timeframe, we can make operators provide a timestamp which will then be compared against the return data from Chainlink's `getTimestamp(uint256 roundId)` function. As previously stated, since implementing additional validation checks would be specific to depeg cover, it may be in our best interest to exclude this part for the time being/demonstration purposes.
 
-## Adding a New Strategy
+### CreateNewTasks.ts
 
-## Potential Enhancements to the AVS (for learning purposes)
+This typescript script is in charge of creating the data for new tasks and calling the `DepegServiceManager.sol` contract's `createNewTask()` function.
 
-The architecture can be further enhanced via:
+In reality this would be any entity who wants to report a depeg event, they don't necessarily have to be someone holding a `SalesPolicy` NFT for depeg cover. The important thing is to standardize the form of the task input so that anyone can compile the same type of "data object" to be passed to the `DepegServiceManager.sol` contract. Depending on the finalized Uno Re stablecoin depeg cover terms and conditions, this value could be a stablecoin contract address and 2 timestamps that are `x` amount of time apart from one another (At which the price of the stablecoin was below an explicitly set minimum).
 
-- the nature of the request is more sophisticated than generating a constant string
-- the operators might need to coordinate with each other
-- the type of signature is different based on the constraints of the service
-- the type and amount of security used to secure the AVS
+### Index.ts
 
-## Rust Operator instructions
+This typescript script is in charge of:
 
-### Anvil Deployment
-
-1. Start Anvil Chain
-
-In terminal window #1, execute the following commands:
-
-```sh
-anvil
-```
-
-2. Deploy Contracts
-
-Open a separate terminal window #2, execute the following commands
-
-```
-make deploy-eigenlayer-contracts
-
-make deploy-depeg-contracts
-```
-
-3. Start Operator
-
-```sh
-make start-rust-operator
-```
-
-4. Spam Tasks
-
-```sh
-make spam-rust-tasks
-```
-
-### Testing
-
-1. Start Anvil Chain
-
-In terminal window #1, execute the following commands:
-
-```sh
-anvil
-```
-
-2. Deploy Contracts
-
-Open a separate terminal window #2, execute the following commands
-
-```
-make deploy-eigenlayer-contracts
-
-make deploy-depeg-contracts
-```
-
-3. Run this command
-
-```
-cargo test --workspace
-```
+1. Registering an AVS operator to the core Eigenlayer contracts that are deployed locally.
+2. Monitoring the `DepegServiceManager.sol` contract for new tasks to be created, in which it will verify the task data and respond to the task.
+   - If the task data contains 2 timestamps, the operator would then view the price at these times, and the time in between, to ensure the token really did depeg.
+   - If the operator responds that the task is valid, the `DepegServiceManager.sol` could either wait for other operators to confirm the validity, or unique to stablecoin depegs, it could use historical data from an on-chain pricefeed to doublecheck that the stablecoin deviated from its pegged price during the inputted timeframe.
