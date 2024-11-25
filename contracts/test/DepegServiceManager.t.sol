@@ -283,16 +283,44 @@ contract DepegTaskManagerSetup is Test {
         return signatures;
     }
 
+    /**@notice Creates a string array with sources for the price depeg */
+    function createSources() internal pure returns (string[] memory) {
+        string[] memory sources;
+        sources[0] = "https://coinmarketcap.com/currencies/usd-coin/";
+        return sources;
+    }
+
+    /**@notice Returns the task data to be sent to `createNewTask()` */
+    function getTaskData()
+        public
+        pure
+        returns (address, uint40, uint40, string[] memory)
+    {
+        address token = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        uint40 startTimestamp = uint40(1732252000);
+        uint40 endTimestamp = uint40(1732253000);
+        string[] memory sources = createSources();
+        return (token, startTimestamp, endTimestamp, sources);
+    }
+
     function createTask(
         TrafficGenerator memory generator,
-        string memory taskName
+        address token,
+        uint40 startTimestamp,
+        uint40 endTimestamp,
+        string[] memory sources
     ) internal {
         IDepegServiceManager depegServiceManager = IDepegServiceManager(
             depegDeployment.depegServiceManager
         );
 
         vm.prank(generator.key.addr);
-        depegServiceManager.createNewTask(taskName);
+        depegServiceManager.createNewTask(
+            token,
+            startTimestamp,
+            endTimestamp,
+            sources
+        );
     }
 
     function respondToTask(
@@ -301,7 +329,9 @@ contract DepegTaskManagerSetup is Test {
         uint32 referenceTaskIndex
     ) internal {
         // Create the message hash
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(task.token, task.startTimestamp, task.endTimestamp)
+        );
 
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
@@ -464,11 +494,21 @@ contract CreateTask is DepegTaskManagerSetup {
         sm = IDepegServiceManager(depegDeployment.depegServiceManager);
     }
 
+    /**@notice Create the task with the DepegServiceManager's `createNewTask()`
+     * @dev Uses same mock data as `operator/createNewTask.ts`'s `generateTaskData()` */
     function testCreateTask() public {
-        string memory taskName = "Test Task";
+        address token = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        uint40 startTimestamp = uint40(1732252000);
+        uint40 endTimestamp = uint40(1732253000);
+        string[] memory sources = createSources();
 
         vm.prank(generator.key.addr);
-        IDepegServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        IDepegServiceManager.Task memory newTask = sm.createNewTask(
+            token,
+            startTimestamp,
+            endTimestamp,
+            sources
+        );
     }
 }
 
@@ -516,11 +556,23 @@ contract RespondToTask is DepegTaskManagerSetup {
     }
 
     function testRespondToTask() public {
-        string memory taskName = "TestTask";
-        IDepegServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        (
+            address token,
+            uint40 startTime,
+            uint40 endTime,
+            string[] memory sources
+        ) = this.getTaskData();
+        IDepegServiceManager.Task memory newTask = sm.createNewTask(
+            token,
+            startTime,
+            endTime,
+            sources
+        );
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(token, startTime, endTime)
+        );
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes memory signature = signWithSigningKey(
             operators[0],

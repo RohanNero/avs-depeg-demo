@@ -54,10 +54,19 @@ contract DepegServiceManager is ECDSAServiceManagerBase, IDepegServiceManager {
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
-    function createNewTask(string memory name) external returns (Task memory) {
+    function createNewTask(
+        address token,
+        uint40 startTimestamp,
+        uint40 endTimestamp,
+        string[] memory sources
+    ) external returns (Task memory) {
         // create a new task struct
         Task memory newTask;
-        newTask.name = name;
+        newTask.token = token;
+        newTask.startTimestamp = startTimestamp;
+        newTask.endTimestamp = endTimestamp;
+        newTask.sources = sources;
+
         newTask.taskCreatedBlock = uint32(block.number);
 
         // store hash of task onchain, emit event, and increase taskNum
@@ -83,8 +92,10 @@ contract DepegServiceManager is ECDSAServiceManagerBase, IDepegServiceManager {
             "Operator has already responded to the task"
         );
 
-        // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        // The message that was signed (token, start time, end time)
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(task.token, task.startTimestamp, task.endTimestamp)
+        );
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
         if (

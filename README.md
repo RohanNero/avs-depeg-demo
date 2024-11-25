@@ -4,79 +4,59 @@ This repo, forked from [hello-world-avs](https://github.com/Layr-Labs/hello-worl
 
 ### Example Flow
 
-1. User buys a stablecoin Depeg cover and receives sales policy NFT.
-2. The stablecoin they hold depegs for x amount of time and decreases in value below y threshold.
-3. The user, or anyone, can interact with the `DepegServiceManager` to create a task using relevant input data.
+1. User buys a stablecoin Depeg cover and receives a sales policy NFT.
+2. The stablecoin they hold depegs for **x** amount of time and decreases in value below **y** threshold.
+3. Anyone interacts with the `DepegServiceManager` to create a task using relevant input data.
+   - `createNewTask()`
+   - Inputs a timestamp at which a stablecoin depegged, operators can define the exact timeframe in their responses.
 4. An AVS monitoring the contract events can perform computation to validate or invalidate the task by responding to it.
+   - `respondToTask()`
+   - This can be aggregated BLS signatures from multiple operators if we require **z** signatures for a response.
 
 ## Quick Start
 
 To setup and run the code, you'll need to open three different terminals.
 
-### First Terminal
-
-Clone the repo:
+### Initial Setup + Starting Local Anvil Chain _(First Terminal)_
 
 ```sh
-git clone
-```
+# Clone the repo:
+git clone https://github.com/RohanNero/avs-depeg-demo
 
-Install the dependencies:
-
-```sh
+# Install the dependencies:
 npm install
-```
 
-Start local anvil chain (Foundry):
+# Create `.env` files and populate them with a private key (default works):
+cp .env.example .env
+cp contracts/.env.example contracts/.env
 
-```sh
+# Start local anvil chain (Foundry):
 anvil
 ```
 
-### Second Terminal
-
-Create `.env` files and populate them with a private key (default works):
+### Deploy Contracts + Start Operator _(Second Terminal)_
 
 ```sh
-cp .env.example .env
-cp contracts/.env.example contracts/.env
-```
-
-Compile the smart contracts:
-
-```sh
+# Compile the smart contracts:
 npm run build
-```
 
-Deploy the EigenLayer core contracts:
-
-```sh
+# Deploy the EigenLayer core contracts:
 npm run deploy:core
-```
 
-Deploy our Depeg AVS contracts:
-
-```sh
+# Deploy our Depeg AVS contracts:
 npm run deploy:depeg
-```
 
-Update ABIs (Optional):
-
-```sh
+# Update ABIs (Optional):
 npm run extract:abis
-```
 
-Start the Operator application (Monitor for new tasks):
-
-```sh
+# Start the Operator application (Monitors for new tasks):
 npm run start:operator
 ```
 
-### Third Terminal
-
-Create new Depeg-AVS Tasks:
+### Start Creating New Tasks _(Third Terminal)_
 
 ```sh
+# Create new Depeg-AVS Tasks:
 npm run start:traffic
 ```
 
@@ -102,6 +82,40 @@ In the case of stablecoin depeg, the data can potentially be confirmed on-chain 
 #### Chainlink Integration
 
 One solution, only applicable to stablecoin depegs, to verify the AVS response would be to use historical data from chainlink's USDC/USD pair. Their `getAnswer()` function takes a `uint256 roundId` as input, allowing you to view prices that were reported in the past. In order to easily verify that the `roundId` corresponds to a certain timeframe, we can make operators provide a timestamp which will then be compared against the return data from Chainlink's `getTimestamp(uint256 roundId)` function. As previously stated, since implementing additional validation checks would be specific to depeg cover, it may be in our best interest to exclude this part for the time being/demonstration purposes.
+
+#### Task Object
+
+The `struct Task` should always contain relevant data that can be used to prove task validity.
+
+Currently, our `Task` contains two timestamps, defining the timeframe of the depeg event, and an array of strings that can be used to site sources for which the price data originated. Now when operators respond to the created tasks, they can directly compare the timeframe against the prices recorded at the `sources` URLs. It may be in our best interest to provide a list of acceptable price sources that are credible, this way malicious entities can't create their own `sources` with inaccurate price data.
+
+```sol
+struct Task {
+        uint40 startingTimestamp;
+        uint40 endingTimestamp;
+        string[] sources;
+        uint32 taskCreatedBlock;
+    }
+```
+
+We still must consider what happens if a task is created with a timeframe that doesn't accurately define the depeg event. Consider this example flow:
+
+1. USDC depegs from 0 `startingTimestamp` - 100 `endingTimestamp`.
+2. Task is created with `startingTimestamp` = 0 and `endingTimestamp` = 75.
+3. Task is responded to and:
+   - The task is marked valid because technically the data is correct (depeg event did occur at the timestamps).
+   - The task is marked invalid because the timestamps don't accurately encompass the entire duration of the depeg.
+   - The task is marked valid and updated to have `startingTimestamp` = 0 and `endingTimestamp` = 100.
+4. All `SalesPolicy` NFTs active during the depeg time are automatically eligible for a pay out.
+
+On top of deciding how we handle responding to the tasks, we also need a method of preventing multiple tasks being created for the same depeg event.
+
+- Off-chain operator logic can view previous task timestamps and compare to newly created timestamps, but this doesn't solve duplicate tasks being created, only responded to.
+- On-chain logic inside `DepegServiceManager` could check to see if the timestamps fall within another task's, but this could get expsenive to execute once multiple tasks are created.
+
+Either way, the operators should probably contain logic marking all of the depeg event timestamps to prevent duplicate tasks (If the operators are the only ones allowed to create new tasks, this would solve the above issue).
+
+- Create a standardized method/container for operators to keep track of all depeg events.
 
 ### CreateNewTasks.ts
 

@@ -138,9 +138,24 @@
     "name": "createNewTask",
     "inputs": [
       {
-        "name": "name",
-        "type": "string",
-        "internalType": "string"
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "startTimestamp",
+        "type": "uint40",
+        "internalType": "uint40"
+      },
+      {
+        "name": "endTimestamp",
+        "type": "uint40",
+        "internalType": "uint40"
+      },
+      {
+        "name": "sources",
+        "type": "string[]",
+        "internalType": "string[]"
       }
     ],
     "outputs": [
@@ -150,9 +165,24 @@
         "internalType": "struct IDepegServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "startTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "endTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "sources",
+            "type": "string[]",
+            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",
@@ -287,9 +317,24 @@
         "internalType": "struct IDepegServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "startTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "endTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "sources",
+            "type": "string[]",
+            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",
@@ -407,9 +452,24 @@
         "internalType": "struct IDepegServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "startTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "endTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "sources",
+            "type": "string[]",
+            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",
@@ -476,9 +536,24 @@
         "internalType": "struct IDepegServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "startTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "endTimestamp",
+            "type": "uint40",
+            "internalType": "uint40"
+          },
+          {
+            "name": "sources",
+            "type": "string[]",
+            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",

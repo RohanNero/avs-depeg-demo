@@ -32,19 +32,45 @@ const depegServiceManager = new ethers.Contract(
 );
 
 // Function to generate random names
-function generateRandomName(): string {
-  const adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
-  const nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
-  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  const randomName = `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
-  return randomName;
+// function generateRandomName(): string {
+//   const adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
+//   const nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
+//   const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+//   const noun = nouns[Math.floor(Math.random() * nouns.length)];
+//   const randomName = `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
+//   return randomName;
+// }
+
+/**@notice Function to generate task creation data
+ * @dev Uses the same data as `test/DepegServiceManager.t.sol`'s `testCreateTask()`
+ */
+function generateTaskData(): {
+  token: string;
+  startTime: number;
+  endTime: number;
+  sources: string[];
+} {
+  const token = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+  const startTime = 1732252000;
+  const endTime = 1732253000;
+  const sources = ["https://coinmarketcap.com/currencies/usd-coin/"];
+  return { token, startTime, endTime, sources };
 }
 
-async function createNewTask(taskName: string) {
+/**@notice Calls the DepegServiceManager's `createNewTask()` function */
+async function createNewTask(
+  token: string,
+  startTime: number,
+  endTime: number,
+  sources: string[]
+) {
   try {
-    // Send a transaction to the createNewTask function
-    const tx = await depegServiceManager.createNewTask(taskName);
+    const tx = await depegServiceManager.createNewTask(
+      token,
+      startTime,
+      endTime,
+      sources
+    );
 
     // Wait for the transaction to be mined
     const receipt = await tx.wait();
@@ -55,12 +81,15 @@ async function createNewTask(taskName: string) {
   }
 }
 
-// Function to create a new task with a random name every 15 seconds
+// Function to create a new task every 15 seconds
 function startCreatingTasks() {
   setInterval(() => {
-    const randomName = generateRandomName();
-    console.log(`Creating new task with name: ${randomName}`);
-    createNewTask(randomName);
+    const { token, startTime, endTime, sources } = generateTaskData();
+    console.log(`Creating new task for token: ${token}`);
+    console.log(`Start: ${startTime}`);
+    console.log(`End: ${endTime}`);
+    console.log(`Sources: ${sources}`);
+    createNewTask(token, startTime, endTime, sources);
   }, 24000);
 }
 
