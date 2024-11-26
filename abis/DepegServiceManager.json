@@ -151,11 +151,6 @@
         "name": "endTimestamp",
         "type": "uint40",
         "internalType": "uint40"
-      },
-      {
-        "name": "sources",
-        "type": "string[]",
-        "internalType": "string[]"
       }
     ],
     "outputs": [
@@ -178,11 +173,6 @@
             "name": "endTimestamp",
             "type": "uint40",
             "internalType": "uint40"
-          },
-          {
-            "name": "sources",
-            "type": "string[]",
-            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",
@@ -332,11 +322,6 @@
             "internalType": "uint40"
           },
           {
-            "name": "sources",
-            "type": "string[]",
-            "internalType": "string[]"
-          },
-          {
             "name": "taskCreatedBlock",
             "type": "uint32",
             "internalType": "uint32"
@@ -467,11 +452,6 @@
             "internalType": "uint40"
           },
           {
-            "name": "sources",
-            "type": "string[]",
-            "internalType": "string[]"
-          },
-          {
             "name": "taskCreatedBlock",
             "type": "uint32",
             "internalType": "uint32"
@@ -549,11 +529,6 @@
             "name": "endTimestamp",
             "type": "uint40",
             "internalType": "uint40"
-          },
-          {
-            "name": "sources",
-            "type": "string[]",
-            "internalType": "string[]"
           },
           {
             "name": "taskCreatedBlock",

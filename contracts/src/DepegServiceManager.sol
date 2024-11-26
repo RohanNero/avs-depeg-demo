@@ -57,15 +57,20 @@ contract DepegServiceManager is ECDSAServiceManagerBase, IDepegServiceManager {
     function createNewTask(
         address token,
         uint40 startTimestamp,
-        uint40 endTimestamp,
-        string[] memory sources
-    ) external returns (Task memory) {
+        uint40 endTimestamp
+    )
+        external
+        returns (
+            // string[] memory sources
+            Task memory
+        )
+    {
         // create a new task struct
         Task memory newTask;
         newTask.token = token;
         newTask.startTimestamp = startTimestamp;
         newTask.endTimestamp = endTimestamp;
-        newTask.sources = sources;
+        // newTask.sources = sources;
 
         newTask.taskCreatedBlock = uint32(block.number);
 

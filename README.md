@@ -46,7 +46,7 @@ npm run deploy:core
 # Deploy our Depeg AVS contracts:
 npm run deploy:depeg
 
-# Update ABIs (Optional):
+# Update ABIs (For off-chain scripts):
 npm run extract:abis
 
 # Start the Operator application (Monitors for new tasks):
@@ -87,10 +87,11 @@ One solution, only applicable to stablecoin depegs, to verify the AVS response w
 
 The `struct Task` should always contain relevant data that can be used to prove task validity.
 
-Currently, our `Task` contains two timestamps, defining the timeframe of the depeg event, and an array of strings that can be used to site sources for which the price data originated. Now when operators respond to the created tasks, they can directly compare the timeframe against the prices recorded at the `sources` URLs. It may be in our best interest to provide a list of acceptable price sources that are credible, this way malicious entities can't create their own `sources` with inaccurate price data.
+Currently, our `Task` contains the token address, two timestamps, defining the timeframe of the depeg event, and an array of strings that can be used to site sources for which the price data originated. Now when operators respond to the created tasks, they can directly compare the timeframe against the prices recorded at the `sources` URLs. It may be in our best interest to provide a list of acceptable price sources that are credible, this way malicious entities can't create their own `sources` with inaccurate price data.
 
 ```sol
 struct Task {
+        address token;
         uint40 startingTimestamp;
         uint40 endingTimestamp;
         string[] sources;
@@ -106,12 +107,12 @@ We still must consider what happens if a task is created with a timeframe that d
    - The task is marked valid because technically the data is correct (depeg event did occur at the timestamps).
    - The task is marked invalid because the timestamps don't accurately encompass the entire duration of the depeg.
    - The task is marked valid and updated to have `startingTimestamp` = 0 and `endingTimestamp` = 100.
-4. All `SalesPolicy` NFTs active during the depeg time are automatically eligible for a pay out.
+4. If Valid, all `SalesPolicy` NFTs active during the depeg time are automatically eligible for a pay out.
 
 On top of deciding how we handle responding to the tasks, we also need a method of preventing multiple tasks being created for the same depeg event.
 
 - Off-chain operator logic can view previous task timestamps and compare to newly created timestamps, but this doesn't solve duplicate tasks being created, only responded to.
-- On-chain logic inside `DepegServiceManager` could check to see if the timestamps fall within another task's, but this could get expsenive to execute once multiple tasks are created.
+- On-chain logic inside `DepegServiceManager` could check to see if the timestamps fall within another task's, but this could get expensive to execute once multiple tasks are created.
 
 Either way, the operators should probably contain logic marking all of the depeg event timestamps to prevent duplicate tasks (If the operators are the only ones allowed to create new tasks, this would solve the above issue).
 

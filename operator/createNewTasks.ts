@@ -7,7 +7,7 @@ dotenv.config();
 // Setup env variables
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
-/// TODO: Hack
+
 let chainId = 31337;
 
 const avsDeploymentData = JSON.parse(
@@ -31,16 +31,6 @@ const depegServiceManager = new ethers.Contract(
   wallet
 );
 
-// Function to generate random names
-// function generateRandomName(): string {
-//   const adjectives = ["Quick", "Lazy", "Sleepy", "Noisy", "Hungry"];
-//   const nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear"];
-//   const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-//   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-//   const randomName = `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
-//   return randomName;
-// }
-
 /**@notice Function to generate task creation data
  * @dev Uses the same data as `test/DepegServiceManager.t.sol`'s `testCreateTask()`
  */
@@ -50,7 +40,7 @@ function generateTaskData(): {
   endTime: number;
   sources: string[];
 } {
-  const token = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+  const token = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
   const startTime = 1732252000;
   const endTime = 1732253000;
   const sources = ["https://coinmarketcap.com/currencies/usd-coin/"];
@@ -61,15 +51,15 @@ function generateTaskData(): {
 async function createNewTask(
   token: string,
   startTime: number,
-  endTime: number,
-  sources: string[]
+  endTime: number
+  // sources: string[]
 ) {
   try {
     const tx = await depegServiceManager.createNewTask(
       token,
       startTime,
-      endTime,
-      sources
+      endTime
+      // sources
     );
 
     // Wait for the transaction to be mined
@@ -88,8 +78,8 @@ function startCreatingTasks() {
     console.log(`Creating new task for token: ${token}`);
     console.log(`Start: ${startTime}`);
     console.log(`End: ${endTime}`);
-    console.log(`Sources: ${sources}`);
-    createNewTask(token, startTime, endTime, sources);
+    // console.log(`Sources: ${sources}`);
+    createNewTask(token, startTime, endTime);
   }, 24000);
 }
 

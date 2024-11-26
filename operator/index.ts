@@ -92,21 +92,16 @@ const signAndRespondToTask = async (
 ) => {
   // Create same message hash as `DepegServiceManager`'s `respondToTask()`
   const messageHash = ethers.solidityPackedKeccak256(
-    ["string", "uint40", "uint40"],
+    ["address", "uint40", "uint40"],
     [taskToken, taskStart, taskEnd]
   );
   const messageBytes = ethers.getBytes(messageHash);
   const signature = await wallet.signMessage(messageBytes);
-  console.log("MessageBytes:", messageBytes);
 
   console.log(`Signing data for task ${taskIndex}...`);
 
   const operators = [await wallet.getAddress()];
   const signatures = [signature];
-
-  console.log("Input sources:", taskSources);
-  console.log("Input token:", taskToken);
-  console.log("Input start:", taskStart);
 
   const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
     ["address[]", "bytes[]", "uint32"],
@@ -116,9 +111,7 @@ const signAndRespondToTask = async (
       ethers.toBigInt((await provider.getBlockNumber()) - 1),
     ]
   );
-  console.log("Message Hash:", messageHash);
-  console.log("Signatures:", signatures);
-  console.log("Signed Task:", signedTask);
+  console.log(`Task ${taskIndex} signed successfully.`);
 
   // Call `respondToTask()` function
   console.log(`Responding to task ${taskIndex}...`);
@@ -127,14 +120,14 @@ const signAndRespondToTask = async (
       token: taskToken,
       startTimestamp: taskStart,
       endTimestamp: taskEnd,
-      sources: ["https://coinmarketcap.com/currencies/usd-coin/"],
+      //   sources: ["https://coinmarketcap.com/currencies/usd-coin/"],
       taskCreatedBlock: taskCreatedBlock,
     },
     taskIndex,
     signedTask
   );
   await tx.wait();
-  console.log(`Responded to task.`);
+  console.log(`Responded to task successfully.`);
 };
 
 // Registers as an Operator in EigenLayer.
@@ -208,7 +201,7 @@ const monitorNewTasks = async () => {
       console.log(`New task detected with token: ${task.token}`);
       console.log(`Start: ${task.startTimestamp}`);
       console.log(`End: ${task.endTimestamp}`);
-      console.log(`Sources: ${task.sources}`);
+      //   console.log(`Sources: ${task.sources}`);
       await signAndRespondToTask(
         taskIndex,
         task.taskCreatedBlock,

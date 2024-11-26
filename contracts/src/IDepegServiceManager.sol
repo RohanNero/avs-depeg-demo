@@ -11,7 +11,7 @@ interface IDepegServiceManager {
         address token; // ERC-20 stablecoin address
         uint40 startTimestamp; // Starting timestamp of depeg
         uint40 endTimestamp; // Ending timestamp of depeg
-        string[] sources; // Where the price data came from, could be URLs
+        // string[] sources; // Where the price data came from, could be URLs
         uint32 taskCreatedBlock; // Block at which the task was created
     }
 
@@ -27,9 +27,13 @@ interface IDepegServiceManager {
     function createNewTask(
         address token,
         uint40 startTimestamp,
-        uint40 endTimestamp,
-        string[] memory sources
-    ) external returns (Task memory);
+        uint40 endTimestamp
+    )
+        external
+        returns (
+            // string[] memory sources
+            Task memory
+        );
 
     function respondToTask(
         Task calldata task,

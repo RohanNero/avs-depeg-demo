@@ -284,7 +284,7 @@ contract DepegTaskManagerSetup is Test {
     }
 
     /**@notice Creates a string array with sources for the price depeg */
-    function createSources() internal pure returns (string[] memory) {
+    function getSources() internal pure returns (string[] memory) {
         string[] memory sources;
         sources[0] = "https://coinmarketcap.com/currencies/usd-coin/";
         return sources;
@@ -296,10 +296,10 @@ contract DepegTaskManagerSetup is Test {
         pure
         returns (address, uint40, uint40, string[] memory)
     {
-        address token = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        address token = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
         uint40 startTimestamp = uint40(1732252000);
         uint40 endTimestamp = uint40(1732253000);
-        string[] memory sources = createSources();
+        string[] memory sources = getSources();
         return (token, startTimestamp, endTimestamp, sources);
     }
 
@@ -307,20 +307,14 @@ contract DepegTaskManagerSetup is Test {
         TrafficGenerator memory generator,
         address token,
         uint40 startTimestamp,
-        uint40 endTimestamp,
-        string[] memory sources
+        uint40 endTimestamp // string[] memory sources
     ) internal {
         IDepegServiceManager depegServiceManager = IDepegServiceManager(
             depegDeployment.depegServiceManager
         );
 
         vm.prank(generator.key.addr);
-        depegServiceManager.createNewTask(
-            token,
-            startTimestamp,
-            endTimestamp,
-            sources
-        );
+        depegServiceManager.createNewTask(token, startTimestamp, endTimestamp);
     }
 
     function respondToTask(
@@ -497,17 +491,16 @@ contract CreateTask is DepegTaskManagerSetup {
     /**@notice Create the task with the DepegServiceManager's `createNewTask()`
      * @dev Uses same mock data as `operator/createNewTask.ts`'s `generateTaskData()` */
     function testCreateTask() public {
-        address token = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        address token = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
         uint40 startTimestamp = uint40(1732252000);
         uint40 endTimestamp = uint40(1732253000);
-        string[] memory sources = createSources();
+        string[] memory sources = getSources();
 
         vm.prank(generator.key.addr);
         IDepegServiceManager.Task memory newTask = sm.createNewTask(
             token,
             startTimestamp,
-            endTimestamp,
-            sources
+            endTimestamp
         );
     }
 }
@@ -565,8 +558,7 @@ contract RespondToTask is DepegTaskManagerSetup {
         IDepegServiceManager.Task memory newTask = sm.createNewTask(
             token,
             startTime,
-            endTime,
-            sources
+            endTime
         );
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
