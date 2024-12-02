@@ -2,6 +2,10 @@
 
 This repo, forked from [hello-world-avs](https://github.com/Layr-Labs/hello-world-avs), uses the AVS to rapidly review stablecoin depeg claims. Once a depeg event is confirmed, any cover for that stablecoin, with an active duration encompassing it, can be immediatly eligible for a payout.
 
+This demo simulates depeg tasks being created by generating a pair of random timestamps and passing them to `createNewTask()` inside `/operator/createNewTask.ts`. The operator script that is monitoring for new tasks will validate the input data and then check the average USD price during the reported depeg event. If the average price is below the `PRICE_THRESHOLD` value specified in `/operator/index.ts`, then the operator will respond to the task using the `DepegServiceManager`'s `respondToTask()`.
+
+- Note that the current operator script uses the free [CoinGecko API key](https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key) and is restricted to data within the last 365 days.
+
 ### Example Flow
 
 1. User buys a stablecoin Depeg cover and receives a sales policy NFT.
@@ -9,7 +13,7 @@ This repo, forked from [hello-world-avs](https://github.com/Layr-Labs/hello-worl
 3. Anyone interacts with the `DepegServiceManager` to create a task using relevant input data.
    - `createNewTask()`
    - Inputs a timestamp at which a stablecoin depegged, operators can define the exact timeframe in their responses.
-4. An AVS monitoring the contract events can perform computation to validate or invalidate the task by responding to it.
+4. An operator monitoring the contract's task events can perform computation to validate or invalidate the task by responding to it.
    - `respondToTask()`
    - This can be aggregated BLS signatures from multiple operators if we require **z** signatures for a response.
 
@@ -26,7 +30,7 @@ git clone https://github.com/RohanNero/avs-depeg-demo
 # Install the dependencies:
 npm install
 
-# Create `.env` files and populate them with a private key (default works):
+# Create `.env` files and populate them with a private key (default works) and CoinGecko API key:
 cp .env.example .env
 cp contracts/.env.example contracts/.env
 

@@ -24,7 +24,6 @@ dist/*.d.ts
 # Ignore local anvil state
 # utils/anvil/*.json
 
-oldUtils
 
 target/
 debug/

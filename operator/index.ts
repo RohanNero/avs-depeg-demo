@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
+import axios from "axios";
 const fs = require("fs");
 const path = require("path");
 dotenv.config();
@@ -189,6 +190,88 @@ const registerOperator = async () => {
   console.log("Operator registered on AVS successfully");
 };
 
+// Uses task data to check stablecoin price at certain timestamps
+const validateTaskData = async (
+  taskToken: string,
+  taskStart: number,
+  taskEnd: number
+) => {
+  // Currently doesn't use `taskToken` contract address but easily could map it to the string `usd_coin` in the URL
+
+  // Validate that the timestamps were:
+  //    - start < end
+  //    - within the last year
+  //    - at least 10,000 seconds apart
+  const oneYearAgo = Math.floor(Date.now() / 1000) - 31536000;
+  const MINIMUM_RANGE = 10000;
+  // If avg price is $0.9999 or less, task is valid (raise/lower this value to test a depeg response)
+  const PRICE_THRESHOLD = 0.9999 as number;
+
+  // Validate that the start timestamp is less than the end timestamp
+  if (taskStart >= taskEnd) {
+    throw new Error(
+      "Ending timestamp must be greater than starting timestamp."
+    );
+  }
+  // Validate that the timestamps were within the last year (CoinGecko demo API key limit)
+  if (taskStart < oneYearAgo || taskEnd < oneYearAgo) {
+    throw new Error("Timestamps must be within the last year.");
+  }
+
+  // Validate that the timestamps are at least 10,000 seconds apart (minimum 3 different prices returned)
+  if (taskEnd - taskStart < MINIMUM_RANGE) {
+    throw new Error("Timestamps must be at least 10,000 seconds apart.");
+  }
+
+  if (taskStart)
+    try {
+      // CoinGecko API endpoint for historical price data
+      console.log("Fetching price data from Coin Gecko...");
+      const options = {
+        method: "GET",
+        url: "https://api.coingecko.com/api/v3/coins/usd-coin/market_chart/range",
+        params: {
+          vs_currency: "usd",
+          from: taskStart,
+          to: taskEnd,
+          precision: "8",
+        },
+        headers: {
+          accept: "application/json",
+          "x-cg-demo-api-key": process.env.COINGECKO_API_KEY,
+        },
+      };
+
+      const response = await axios
+        .request(options)
+        .catch((err) => console.error(err));
+
+      // Assuming you want to check if the price is below the threshold
+      if (response) {
+        console.log("Price data fetched!");
+        // Array of `[timestamp, price]` objects with 8 decimals
+        const prices = response.data.prices.map((pair: number[]) => pair[1]);
+        const averagePrice =
+          prices.reduce((sum: number, price: number) => sum + price, 0) /
+          prices.length;
+
+        // console.log("prices:", prices);
+        console.log("Average price at time frame: ", averagePrice);
+
+        if (PRICE_THRESHOLD >= averagePrice) {
+          console.log("Price below or at minimum threshold.");
+          return true;
+        } else {
+          console.log("Price above minimum threshold.");
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching token price:", error);
+      return false;
+    }
+};
+
 // Listens and waits for new tasks to be created
 const monitorNewTasks = async () => {
   //console.log(`Creating new task "EigenWorld"`);
@@ -202,14 +285,25 @@ const monitorNewTasks = async () => {
       console.log(`Start: ${task.startTimestamp}`);
       console.log(`End: ${task.endTimestamp}`);
       //   console.log(`Sources: ${task.sources}`);
-      await signAndRespondToTask(
-        taskIndex,
-        task.taskCreatedBlock,
+      // Now that we have the created task's data, lets use a function to validate the price
+      const validTask = await validateTaskData(
         task.token,
         task.startTimestamp,
-        task.endTimestamp,
-        task.sources
+        task.endTimestamp
       );
+      // Conditionally respond if the task if valid
+      if (validTask) {
+        await signAndRespondToTask(
+          taskIndex,
+          task.taskCreatedBlock,
+          task.token,
+          task.startTimestamp,
+          task.endTimestamp,
+          task.sources
+        );
+      } else {
+        console.log("Task invalid, not responding.");
+      }
     }
   );
 

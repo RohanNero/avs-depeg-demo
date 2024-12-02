@@ -31,6 +31,34 @@ const depegServiceManager = new ethers.Contract(
   wallet
 );
 
+/**@notice Returns two random timestamps within last year and have 3-72 hours between them */
+function getRandomTimestamps() {
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  const oneYearAgo = currentTimestamp - 31536000;
+
+  // Randomly pick a start timestamp within the last year
+  const startTimestamp = Math.floor(
+    Math.random() * (currentTimestamp - oneYearAgo) + oneYearAgo
+  );
+
+  // Define the range for the gap between the timestamps (3 to 72 hours in seconds for demo)
+  const minGap = 3 * 60 * 60; // 3 hours in seconds
+  const maxGap = 72 * 60 * 60; // 72 hours in seconds
+
+  // Randomly generate a gap within the allowed range
+  const gap = Math.floor(Math.random() * (maxGap - minGap) + minGap);
+
+  // Calculate the end timestamp
+  const endTimestamp = startTimestamp + gap;
+
+  // Ensure the end timestamp does not exceed the current timestamp
+  if (endTimestamp > currentTimestamp) {
+    return getRandomTimestamps(); // Re-run the function if out of range
+  }
+
+  return [startTimestamp, endTimestamp];
+}
+
 /**@notice Function to generate task creation data
  * @dev Uses the same data as `test/DepegServiceManager.t.sol`'s `testCreateTask()`
  */
@@ -41,8 +69,9 @@ function generateTaskData(): {
   sources: string[];
 } {
   const token = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-  const startTime = 1732252000;
-  const endTime = 1732253000;
+  // const startTime = 1732240000;
+  // const endTime = 1732250000;
+  const [startTime, endTime] = getRandomTimestamps();
   const sources = ["https://coinmarketcap.com/currencies/usd-coin/"];
   return { token, startTime, endTime, sources };
 }
