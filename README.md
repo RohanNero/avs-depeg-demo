@@ -136,3 +136,9 @@ This typescript script is in charge of:
 2. Monitoring the `DepegServiceManager.sol` contract for new tasks to be created, in which it will verify the task data and respond to the task.
    - If the task data contains 2 timestamps, the operator would then view the price at these times, and the time in between, to ensure the token really did depeg.
    - If the operator responds that the task is valid, the `DepegServiceManager.sol` could either wait for other operators to confirm the validity, or unique to stablecoin depegs, it could use historical data from an on-chain pricefeed to doublecheck that the stablecoin deviated from its pegged price during the inputted timeframe.
+
+#### CoinGecko Integration
+
+Currently the operator script uses the free/demo tier of CoinGecko's API key, this restricts the viewable data to prices within the last 365 days and 10,000 calls per month.
+
+The API call is made inside the `validateTaskData()` function and uses CoinGecko's `range` method to view a list of prices at the specified task timeframe. Once the response is available, the average price during the predefined time period is compared against the set `PRICE_THRESHOLD` value. If the reported price is less than or equal to the hard-coded threshold, the operator uses `signAndRespondToTask()` to call `respondToTask()` on the `DepegServiceManager`.
